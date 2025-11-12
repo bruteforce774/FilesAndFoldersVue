@@ -18,8 +18,6 @@ function handleChangePhase(newPhase: boolean) {
 // Handle the actual delete action
 function handleDelete() {
   emit('deleteFileOrFolder');
-  // Reset to initial phase after deleting
-  isInInitialPhase.value = true;
 }
 </script>
 
