@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { FileOrFolder } from '../types';
+
 
 // Define props - these come FROM the parent component
 // Notice: kebab-case in HTML becomes camelCase in JavaScript
@@ -8,6 +10,15 @@ const props = defineProps<{
   parentFolder?: number | false;
   markedFilesAndFolders: number[];
 }>();
+
+// Computed properties to separate folders and files
+const folders = computed(() =>
+  props.items.filter((f) => !f.hasOwnProperty('content'))
+);
+
+const files = computed(() =>
+  props.items.filter((f) => f.hasOwnProperty('content'))
+);
 
 // Define events - these go TO the parent component
 // The parent will listen for these with @selected and @marked-file-or-folder-changed
@@ -36,8 +47,8 @@ function handleCheckboxChange(id: number, isChecked: boolean) {
       📁 <a href="#" @click="handleLinkClick($event, parentFolder)">..</a><br />
     </template>
 
-    <!-- Folders (items without 'content' property) -->
-    <template v-for="folder in items.filter(f => !f.hasOwnProperty('content'))" :key="folder.id">
+    <!-- Using computed properties in template-->
+    <template v-for="folder in folders" :key="folder.id">
       <input
         type="checkbox"
         :checked="markedFilesAndFolders.includes(folder.id)"
@@ -47,7 +58,7 @@ function handleCheckboxChange(id: number, isChecked: boolean) {
     </template>
 
     <!-- Files (items WITH 'content' property) -->
-    <template v-for="file in items.filter(f => f.hasOwnProperty('content'))" :key="file.id">
+    <template v-for="file in files" :key="file.id">
       <input
         type="checkbox"
         :checked="markedFilesAndFolders.includes(file.id)"
