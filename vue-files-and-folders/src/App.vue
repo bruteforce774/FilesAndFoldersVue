@@ -2,6 +2,7 @@
 import { reactive, computed } from 'vue';
 import FilesAndFolders from './components/FilesAndFolders.vue';
 import Breadcrumbs from './components/Breadcrumbs.vue';
+import DeleteFileOrFolder from './components/DeleteFileOrFolder.vue';
 import type { FileOrFolder } from './types';
 
 // Reactive state - Vue automatically tracks changes!
@@ -56,6 +57,9 @@ const breadcrumbTexts = computed(() => {
   return breadcrumbs.reverse();
 });
 
+// Computed: Check if there are any marked items
+const hasMarkedItems = computed(() => state.markedFilesAndFolders.size > 0);
+
 // Event handler: Navigate to selected folder/file
 function handleSelected(id: string) {
   if (id === '-1') {
@@ -76,6 +80,17 @@ function handleMarkedFileOrFolderChanged(payload: { id: number; isChecked: boole
     state.markedFilesAndFolders.delete(payload.id);
   }
   // Again, no manual render! Vue's reactivity handles it
+}
+
+// Event handler: Delete marked files and folders
+function handleDelete() {
+  // Filter out all marked items
+  state.filesAndFolders = state.filesAndFolders.filter(
+    f => !state.markedFilesAndFolders.has(f.id)
+  );
+  // Clear the marked items set
+  state.markedFilesAndFolders.clear();
+  // Vue automatically re-renders!
 }
 </script>
 
@@ -101,6 +116,12 @@ function handleMarkedFileOrFolderChanged(payload: { id: number; isChecked: boole
       :marked-files-and-folders="markedFilesArray"
       @selected="handleSelected"
       @marked-file-or-folder-changed="handleMarkedFileOrFolderChanged"
+    />
+
+    <!-- DeleteFileOrFolder - only shown when items are marked -->
+    <DeleteFileOrFolder
+      v-if="hasMarkedItems"
+      @delete-file-or-folder="handleDelete"
     />
   </div>
 </template>
