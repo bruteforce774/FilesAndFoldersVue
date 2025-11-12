@@ -4,6 +4,7 @@ import FilesAndFolders from './components/FilesAndFolders.vue';
 import Breadcrumbs from './components/Breadcrumbs.vue';
 import DeleteFileOrFolder from './components/DeleteFileOrFolder.vue';
 import AddFileOrFolder from './components/AddFileOrFolder.vue';
+import EditFile from './components/EditFile.vue';
 import type { FileOrFolder } from './types';
 
 // Reactive state - Vue automatically tracks changes!
@@ -60,6 +61,12 @@ const breadcrumbTexts = computed(() => {
 
 // Computed: Check if there are any marked items
 const hasMarkedItems = computed(() => state.markedFilesAndFolders.size > 0);
+
+// Computed: Check if current item is a file (has content property)
+const isFileSelected = computed(() => {
+  const current = currentFileOrFolder.value;
+  return current && current.hasOwnProperty('content');
+});
 
 // Event handler: Navigate to selected folder/file
 function handleSelected(id: string) {
@@ -121,6 +128,25 @@ function handleContentAdded(payload: { isFile: boolean; name: string }) {
   // Add to state - Vue automatically updates!
   state.filesAndFolders.push(newContent);
 }
+
+// Event handler: Save file content
+function handleContentSaved(payload: { content: string; id: number }) {
+  const file = state.filesAndFolders.find(f => f.id === payload.id);
+  if (file && file.hasOwnProperty('content')) {
+    file.content = payload.content;
+  }
+  // Vue automatically re-renders!
+}
+
+// Event handler: Cancel editing - navigate back to parent folder
+function handleEditCancelled(payload: { id: number }) {
+  const file = state.filesAndFolders.find(f => f.id === payload.id);
+  if (file) {
+    // Navigate to the file's parent folder
+    state.currentId = file.parentId;
+  }
+  // Vue automatically re-renders!
+}
 </script>
 
 <template>
@@ -149,6 +175,15 @@ function handleContentAdded(payload: { isFile: boolean; name: string }) {
 
     <!-- AddFileOrFolder component -->
     <AddFileOrFolder @content-added="handleContentAdded" />
+
+    <!-- EditFile - only shown when a file is selected -->
+    <EditFile
+      v-if="isFileSelected"
+      :content="currentFileOrFolder!.content ?? ''"
+      :id="state.currentId!"
+      @content-saved="handleContentSaved"
+      @edit-cancelled="handleEditCancelled"
+    />
 
     <!-- DeleteFileOrFolder - only shown when items are marked -->
     <DeleteFileOrFolder
