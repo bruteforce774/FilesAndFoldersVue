@@ -3,6 +3,7 @@ import { reactive, computed } from 'vue';
 import FilesAndFolders from './components/FilesAndFolders.vue';
 import Breadcrumbs from './components/Breadcrumbs.vue';
 import DeleteFileOrFolder from './components/DeleteFileOrFolder.vue';
+import AddFileOrFolder from './components/AddFileOrFolder.vue';
 import type { FileOrFolder } from './types';
 
 // Reactive state - Vue automatically tracks changes!
@@ -92,6 +93,34 @@ function handleDelete() {
   state.markedFilesAndFolders.clear();
   // Vue automatically re-renders!
 }
+
+// Event handler: Add new file or folder
+function handleContentAdded(payload: { isFile: boolean; name: string }) {
+  // Generate new ID (max existing ID + 1)
+  const newId = Math.max(...state.filesAndFolders.map(f => f.id)) + 1;
+
+  // Create new file or folder
+  const newContent: FileOrFolder = {
+    id: newId,
+    name: payload.name,
+  };
+
+  // Determine parent: if we're in a file, use its parent; if in folder, use folder itself
+  const current = currentFileOrFolder.value;
+  if (current) {
+    newContent.parentId = current.hasOwnProperty('content')
+      ? current.parentId
+      : current.id;
+  }
+
+  // If it's a file, add empty content property
+  if (payload.isFile) {
+    newContent.content = '';
+  }
+
+  // Add to state - Vue automatically updates!
+  state.filesAndFolders.push(newContent);
+}
 </script>
 
 <template>
@@ -117,6 +146,9 @@ function handleDelete() {
       @selected="handleSelected"
       @marked-file-or-folder-changed="handleMarkedFileOrFolderChanged"
     />
+
+    <!-- AddFileOrFolder component -->
+    <AddFileOrFolder @content-added="handleContentAdded" />
 
     <!-- DeleteFileOrFolder - only shown when items are marked -->
     <DeleteFileOrFolder
