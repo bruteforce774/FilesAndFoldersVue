@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, computed } from 'vue';
 import FilesAndFolders from './components/FilesAndFolders.vue';
+import Breadcrumbs from './components/Breadcrumbs.vue';
 import type { FileOrFolder } from './types';
 
 // Reactive state - Vue automatically tracks changes!
@@ -36,6 +37,25 @@ const parentFolderId = computed(() => {
 // Computed: Convert Set to Array for the component
 const markedFilesArray = computed(() => Array.from(state.markedFilesAndFolders));
 
+// Computed: Build breadcrumb trail by walking up the parent chain
+const breadcrumbTexts = computed(() => {
+  if (!state.currentId) return [];
+
+  const breadcrumbs: string[] = [];
+  let id = state.currentId;
+
+  // Walk up the parent chain
+  while (id) {
+    const fileOrFolder = state.filesAndFolders.find(f => f.id === id);
+    if (!fileOrFolder) break;
+    breadcrumbs.push(fileOrFolder.name);
+    id = fileOrFolder.parentId;
+  }
+
+  // Reverse so it goes from root to current
+  return breadcrumbs.reverse();
+});
+
 // Event handler: Navigate to selected folder/file
 function handleSelected(id: string) {
   if (id === '-1') {
@@ -62,6 +82,9 @@ function handleMarkedFileOrFolderChanged(payload: { id: number; isChecked: boole
 <template>
   <div class="app">
     <h1>Files and Folders - Vue Edition</h1>
+
+    <!-- Breadcrumbs component -->
+    <Breadcrumbs :texts="breadcrumbTexts" />
 
     <!-- Debug info (we'll remove this later) -->
     <div class="debug">
